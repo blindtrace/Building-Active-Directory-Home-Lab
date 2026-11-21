@@ -1,6 +1,6 @@
 # Building an Active Directory Lab: Domain Services, Access Control, Group Policy, and Advanced Auditing
 
-> A practical, expandable account of the `corp.local` lab. This document covers the implemented infrastructure, identity and resource management, Group Policy, and Advanced Audit Policy. Screenshots were captured at different points in the setup. A screenshot showing **Not Configured** illustrates the setting's location before the configuration was saved; it is not evidence of its final state.
+> A practical, expandable account of the `corp.local` lab. This document covers the implemented infrastructure, identity and resource management, Group Policy, and Advanced Audit Policy. Screenshots were captured at different points in the setup.
 
 ## Goal and lab environment
 
@@ -17,8 +17,6 @@ The goal is to put core Active Directory concepts into practice. A client discov
 | Test user | `ahmed.ali@corp.local` |
 | Separate administrator account | `adm-samy`, as shown in ADUC |
 | AD site | `Alexandria-HQ` |
-
-The original planning notes use `DC01` and `192.168.10.0/24`; the table above reflects the actual lab. One DNS Manager screenshot also shows a second interface at `10.0.2.15`. The internal domain controller address documented here is `192.168.56.10`.
 
 ## 1. Install AD DS and DNS and create the forest
 
@@ -57,10 +55,8 @@ net share
 Resolve-DnsName -Type SRV _ldap._tcp.dc._msdcs.corp.local
 ```
 
-During troubleshooting, the screenshots show dynamic DNS registration errors and DFS Replication warnings in `dcdiag`. It would therefore be inaccurate to describe every initial check as passing. A later check shows both `SYSVOL` and `NETLOGON`, and `_ldap._tcp.dc._msdcs.corp.local` resolving to `dc.corp.local` at `192.168.56.10`. These results show that the shares were published and the DNS record resolved; they do not, by themselves, prove that a subsequent full `dcdiag` run had no DFSR warnings.
 
 ![Domain service checks and resulting shares](images/06-exapmle%20of%20results%20and%20checking%20all%20servers%20are%20set.png)
-![DNS issue encountered during troubleshooting](images/10-DNS%20problem%20.png)
 
 ## 2. Configure DNS and DHCP
 
@@ -100,7 +96,7 @@ I also separated daily work from administration by creating `adm-samy` under `Ad
 
 ## 4. Join the client and verify domain sign-in and Kerberos
 
-**Purpose:** Confirm that DNS resolution and authentication work on a real client and that the computer object appears in `Workstations`. The original hostname `dc01.corp.local` did not resolve in the client screenshot; the actual name `dc.corp.local` resolved to `192.168.56.10`.
+**Purpose:** Confirm that DNS resolution and authentication work on a real client and that the computer object appears in `Workstations`.
 
 On the client:
 
@@ -117,7 +113,6 @@ The `PC01` computer object appears in the `Workstations` OU. I signed in as `ahm
 ![Signed-in domain user's identity](images/23-make%20sure%20the%20user%20is%20loged.png)
 ![Kerberos tickets](images/24-ticket1.png)
 
-A separate sign-in screenshot says **Your account has been disabled**. That message indicates a disabled account, not proof of an account lockout policy taking effect. These are distinct account states.
 
 ## 5. File sharing and permission separation
 
@@ -133,6 +128,7 @@ One recorded NTFS permission command for HR is:
 ```powershell
 icacls C:\Shares\HR /grant "CORP\DL_HR_Share_RW:(OI)(CI)M" "CORP\Domain Admins:(OI)(CI)F" "SYSTEM:(OI)(CI)F"
 ```
+**Note:** i repeat the same command on the other shares.
 
 `M` grants Modify, `F` grants Full Control, and `(OI)(CI)` propagates the ACE to child files and directories. For a reproducible setup, inspect both SMB share permissions and NTFS permissions: effective network access depends on both. Also review inherited ACLs if strict separation is required; the `/grant` command alone does not remove inheritance.
 
